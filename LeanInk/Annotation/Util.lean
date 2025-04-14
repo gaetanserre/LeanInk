@@ -46,8 +46,8 @@ instance [ToString a] : ToString (FragmentInterval a) where
 
 /- FUNCTIONS -/
 def toFragmentIntervals { x : Type } [Positional x] [Inhabited x] [Inhabited x] (positionals : List x) : List (FragmentInterval x) :=
-  let indexedPositionals := positionals.enum.map (λ (idx, f) => [FragmentInterval.head (Positional.headPos f) f idx, FragmentInterval.tail (Positional.tailPos f) f idx])
-  let mergedPositionals := indexedPositionals.join
+  let indexedPositionals := (positionals.zipIdx 0).map (λ (f, idx) => [FragmentInterval.head (Positional.headPos f) f idx, FragmentInterval.tail (Positional.tailPos f) f idx])
+  let mergedPositionals := indexedPositionals.flatten
   List.sort (λ x y =>  x.position < y.position) mergedPositionals
 
 def maxTailPos (y : String.Pos) : Option String.Pos -> String.Pos

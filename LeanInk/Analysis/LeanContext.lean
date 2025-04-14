@@ -6,6 +6,8 @@ import Lean.Util.Paths
 import LeanInk.Logger
 import LeanInk.Configuration
 
+import Lake
+
 namespace LeanInk.Analysis
 
 open System
@@ -33,6 +35,17 @@ structure SetupFileOutput where
   -- ignore the rest
   deriving ToJson, FromJson
 
+/--
+List all directories containing the olean file associated to a Lake package
+and the current library.
+-/
+def get_packages_lib_dir (wd : FilePath) : IO (List FilePath) := do
+  let pkg_dir := wd / ".lake/packages"
+  pkg_dir.readDir >>= (fun a =>
+    let current_lib : List FilePath := [".lake/build/lib/lean"]
+    pure ((a.map (fun d => d.path / ".lake/build/lib/lean")).toList ++ current_lib)
+  )
+
 open IO
 def initializeLakeContext (lakeFile : FilePath) (header : Syntax) : AnalysisM Unit := do
   if !(← lakeFile.pathExists) then
@@ -46,6 +59,7 @@ def initializeLakeContext (lakeFile : FilePath) (header : Syntax) : AnalysisM Un
     logInfo s!"Loading Lake Context with lakefile ({lakeFile})..."
     let imports := Lean.Elab.headerToImports header
     let arguments := #[lakePrintPathsCmd, (toString lakeFile)] ++ imports.map (toString ·.module)
+    logInfo s! "arguments: {arguments}"
     let lakeProcess ← Process.spawn {
       stdin := Process.Stdio.null
       stdout := Process.Stdio.piped
@@ -57,6 +71,7 @@ def initializeLakeContext (lakeFile : FilePath) (header : Syntax) : AnalysisM Un
     match (← lakeProcess.wait) with
     | 0 => do
       let stdout := stdout.split (· == '\n') |>.getLast!
+      logInfo s!"{stdout}"
       match Json.parse stdout with
       | Except.error msg => throw <| IO.userError s!"Failed to parse lake output: {stdout}\nerror: {msg}"
       | Except.ok val => match fromJson? val with
@@ -66,8 +81,9 @@ def initializeLakeContext (lakeFile : FilePath) (header : Syntax) : AnalysisM Un
           let paths : LeanPaths := output.paths
 
           initializeLeanContext
-          initSearchPath (← findSysroot) paths.oleanPath
-          logInfo s!"{paths.oleanPath}"
+          currentDir >>= fun f => do
+            let pkg_path ← get_packages_lib_dir f
+            initSearchPath (← findSysroot) (paths.oleanPath ++ pkg_path)
           logInfo s!"Successfully loaded lake search paths"
     | 2 => logInfo s!"No search paths required!"
     | _ => throw <| IO.userError s!"Using lake failed! Make sure that lake is installed!"

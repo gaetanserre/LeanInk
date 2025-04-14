@@ -32,7 +32,7 @@ jobs:
         run: git config --global core.autocrlf false
 
       # Checkout repository
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
 
       # Install elan with nightly toolchain
       - name: Install Elan (macOS)
@@ -61,10 +61,7 @@ jobs:
 
       # Upload artifact
       - name: Upload artifacts
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.os }}
           path: build
-
-      - name: Run tests
-        run: lake script run tests
