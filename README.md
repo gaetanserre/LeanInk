@@ -3,7 +3,9 @@
 [![CI](https://github.com/gaetanserre/LeanInk/actions/workflows/build.yml/badge.svg)](https://github.com/gaetanserre/LeanInk/actions/workflows/build.yml)
 [![LƎⱯN - 4](https://img.shields.io/static/v1?label=LƎⱯN&message=4.19-rc3&color=black)](https://github.com/leanprover/lean4)
 
+---------
 **This a an attempt to keep LeanInk updated. Some parts of the code are kind of hacky.**
+---------
 
 LeanInk is a command line helper tool for [Alectryon](https://github.com/cpitclaudel/alectryon) which aims to ease the integration and support of [Lean 4](https://github.com/leanprover/lean4).
 Alectryon uses the information provided by LeanInk to create a static code visualization for Lean 4 code.
